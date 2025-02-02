@@ -30,7 +30,7 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res)
 
         try {
             await axios.post(DISCORD_WEBHOOK_URL, {
-                content: `<:doar:1335395138620358749> <@${userId}> doou **R$${amount}** para o projeto **Punishment**.`
+                content: `💰 <@${userId}> doou **R$${amount}** para o projeto **Punishment**.`
             });
             console.log('✅ Mensagem enviada pelo Webhook do Discord');
         } catch (error) {
