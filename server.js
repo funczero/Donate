@@ -4,7 +4,7 @@ const bodyParser = require('body-parser');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const axios = require('axios');
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 80;
 
 const DISCORD_WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL;
 const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
@@ -16,7 +16,7 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res)
     try {
         event = stripe.webhooks.constructEvent(req.body, sig, STRIPE_WEBHOOK_SECRET);
     } catch (err) {
-        console.error('❌ Erro ao validar assinatura do Stripe:', err.message);
+        console.error('[INFO] Erro ao validar assinatura do Stripe:', err.message);
         return res.status(400).send(`Webhook Error: ${err.message}`);
     }
 
@@ -26,15 +26,15 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res)
         const userId = session.metadata?.userId || 'Usuário Desconhecido';
         const amount = session.amount_total / 100;
 
-        console.log(`✅ Pagamento confirmado: R$${amount} por <@${userId}>`);
+        console.log(`[SUCESSO] Pagamento confirmado: R$${amount} por <@${userId}>`);
 
         try {
             await axios.post(DISCORD_WEBHOOK_URL, {
-                content: `💰 <@${userId}> doou **R$${amount}** para o projeto **Punishment**.`
+                content: `<@${userId}> doou **R$${amount}** para o projeto **Punishment**.`
             });
-            console.log('✅ Mensagem enviada pelo Webhook do Discord');
+            console.log('[SUCESSO] Mensagem enviada pelo Webhook do Discord');
         } catch (error) {
-            console.error('❌ Erro ao enviar mensagem pelo Webhook do Discord:', error.message);
+            console.error('[INFO] Erro ao enviar mensagem pelo Webhook do Discord:', error.message);
         }
     }
 
@@ -42,5 +42,5 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res)
 });
 
 app.listen(PORT, () => {
-    console.log(`🚀 Servidor rodando na porta ${PORT}`);
+    console.log(`[SUCESSO] Servidor rodando na porta ${PORT}`);
 });
