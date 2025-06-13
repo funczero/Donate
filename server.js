@@ -2,45 +2,60 @@ require('dotenv').config();
 
 const express = require('express');
 const axios = require('axios');
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const app = express();
 
 const PORT = process.env.PORT || 3000;
-const { STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, DISCORD_WEBHOOK_URL } = process.env;
+const { DISCORD_WEBHOOK_URL } = process.env;
 
-if (!STRIPE_SECRET_KEY || !STRIPE_WEBHOOK_SECRET || !DISCORD_WEBHOOK_URL) {
-  console.error('[error] Variáveis de ambiente não configuradas.');
+if (!DISCORD_WEBHOOK_URL) {
+  console.error('[error] Variável DISCORD_WEBHOOK_URL não configurada.');
   process.exit(1);
 }
 
-app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
-  const sig = req.headers['stripe-signature'];
-  let event;
+// Mercado Pago envia em JSON comum
+app.use(express.json());
 
-  try {
-    event = stripe.webhooks.constructEvent(req.body, sig, STRIPE_WEBHOOK_SECRET);
-  } catch (err) {
-    console.error(`[error] Assinatura Stripe inválida: ${err.message}`);
-    return res.sendStatus(400);
+app.post('/webhook', async (req, res) => {
+  const event = req.body;
+
+  // Exemplo: quando um pagamento for criado ou atualizado
+  const { type, data } = event;
+
+  if (type !== 'payment') {
+    console.warn(`[warn] Evento ignorado: ${type}`);
+    return res.sendStatus(200);
   }
 
-  if (event.type === 'checkout.session.completed') {
-    const { metadata, amount_total } = event.data.object;
-    const userId = metadata?.userId || '0';
-    const amount = (amount_total / 100).toFixed(2);
+  const paymentId = data.id;
 
-    console.log(`[info] Pagamento recebido: R$${amount} - <@${userId}>`);
+  try {
+    // Buscar detalhes do pagamento no Mercado Pago
+    const { data: payment } = await axios.get(
+      `https://api.mercadopago.com/v1/payments/${paymentId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.MP_TOKEN}`
+        }
+      }
+    );
 
-    try {
+    const valor = payment.transaction_amount.toFixed(2);
+    const userId = payment.metadata?.discord_id || '0';
+    const status = payment.status;
+
+    if (status === 'approved') {
+      console.log(`[info] Pagamento aprovado: R$${valor} - <@${userId}>`);
+
       await axios.post(DISCORD_WEBHOOK_URL, {
-        content: `<@${userId}> doou **R$${amount}** para o projeto **Punishment**.`
+        content: `<@${userId}> doou **R$${valor}** para o projeto **Punishment**. Muito obrigado! ❤️`
       });
+
       console.log('[info] Notificação enviada ao Discord.');
-    } catch (err) {
-      console.error(`[error] Falha ao enviar notificação ao Discord: ${err.message}`);
+    } else {
+      console.log(`[info] Pagamento ${status}: ${paymentId}`);
     }
-  } else {
-    console.warn(`[warn] Evento ignorado: ${event.type}`);
+  } catch (err) {
+    console.error(`[error] Falha ao processar pagamento: ${err.message}`);
   }
 
   res.sendStatus(200);
