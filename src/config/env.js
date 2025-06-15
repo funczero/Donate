@@ -5,7 +5,7 @@ export const {
   STRIPE_SECRET_KEY,
   STRIPE_WEBHOOK_SECRET,
   DISCORD_WEBHOOK_URL,
-  PORT = 3000,
+  PORT = 80,
 } = process.env;
 
 const required = ['STRIPE_SECRET_KEY', 'STRIPE_WEBHOOK_SECRET', 'DISCORD_WEBHOOK_URL'];
