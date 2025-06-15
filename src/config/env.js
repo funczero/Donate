@@ -11,7 +11,7 @@ export const {
 const required = ['STRIPE_SECRET_KEY', 'STRIPE_WEBHOOK_SECRET', 'DISCORD_WEBHOOK_URL'];
 for (const key of required) {
   if (!process.env[key]) {
-    console.error(`[env:error] Variável de ambiente faltando: ${key}`);
+    console.error(`[ENV] Variável de ambiente faltando: ${key}`);
     process.exit(1);
   }
 }
