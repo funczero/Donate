@@ -1,9 +1,9 @@
-import stripePkg from 'stripe';
+import Stripe from 'stripe';
 import { STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET } from '../config/env.js';
 import logger from '../config/logger.js';
 import { notifyDiscord } from '../services/discordNotifier.js';
 
-const stripe = stripePkg(STRIPE_SECRET_KEY);
+const stripe = new Stripe(STRIPE_SECRET_KEY);
 
 export async function handleStripeWebhook(req, res) {
   const sig = req.headers['stripe-signature'];
@@ -21,12 +21,11 @@ export async function handleStripeWebhook(req, res) {
     const userId = session.metadata?.userId || '0';
     const amount = (session.amount_total / 100).toFixed(2);
 
-    logger.info(`Pagamento confirmado: R$${amount} de <@${userId}>`);
-
+    logger.info(`Pagamento de R$${amount} recebido de <@${userId}>`);
     try {
       await notifyDiscord(userId, amount);
     } catch {
-      logger.warn(`Pagamento foi recebido, mas houve erro ao notificar o Discord.`);
+      logger.warn('Erro ao notificar o Discord, mas pagamento foi processado.');
     }
   } else {
     logger.warn(`Evento ignorado: ${event.type}`);
