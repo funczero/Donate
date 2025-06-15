@@ -1,7 +1,7 @@
 #!/bin/bash
 
 echo ""
-echo "📦 Punishment Webhook – Atualizando dependências do projeto..."
+echo "Punishment Webhook – Atualizando dependências do projeto..."
 echo ""
 
 # Instalar/atualizar as dependências principais
@@ -16,6 +16,6 @@ npm install \
 npm install -D nodemon@^3.1.0
 
 echo ""
-echo "✅ Todas as dependências foram instaladas ou atualizadas com sucesso!"
-echo "🚀 Você pode iniciar com: npm run dev"
+echo "Todas as dependências foram instaladas ou atualizadas com sucesso!"
+echo "Você pode iniciar com: npm run dev"
 echo ""
