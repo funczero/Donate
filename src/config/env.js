@@ -5,10 +5,10 @@ export const {
   STRIPE_SECRET_KEY,
   STRIPE_WEBHOOK_SECRET,
   DISCORD_WEBHOOK_URL,
-  PORT = 80,
+  PORT,
 } = process.env;
 
-const required = ['STRIPE_SECRET_KEY', 'STRIPE_WEBHOOK_SECRET', 'DISCORD_WEBHOOK_URL'];
+const required = ['STRIPE_SECRET_KEY', 'STRIPE_WEBHOOK_SECRET', 'PORT', 'DISCORD_WEBHOOK_URL'];
 for (const key of required) {
   if (!process.env[key]) {
     console.error(`[ENV] Variável de ambiente faltando: ${key}`);
