@@ -1,19 +1,24 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
-// Variáveis de ambiente exportadas
+// Exporta as variáveis de ambiente necessárias
 export const {
   MERCADO_PAGO_ACCESS_TOKEN,
   DISCORD_WEBHOOK_URL,
-  PORT
+  PORT,
 } = process.env;
 
-// Verificação de variáveis obrigatórias
-const required = ['MERCADO_PAGO_ACCESS_TOKEN', 'DISCORD_WEBHOOK_URL', 'PORT'];
+// Lista de variáveis obrigatórias
+const required = [
+  'MERCADO_PAGO_ACCESS_TOKEN',
+  'DISCORD_WEBHOOK_URL',
+  'PORT',
+];
 
+// Verificação de variáveis ausentes
 for (const key of required) {
   if (!process.env[key]) {
-    console.error(`[ENV] Variável de ambiente obrigatória ausente: ${key}`);
+    console.error(`[ENV] Variável de ambiente faltando: ${key}`);
     process.exit(1);
   }
 }
