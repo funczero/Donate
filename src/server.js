@@ -1,7 +1,7 @@
 import express from 'express';
 import logger from './config/logger.js';
 import { PORT } from './config/env.js';
-import { handleMercadoPagoWebhook } from './webhook/mercadoPagoHandler.js';
+import { handleMercadoPagoWebhook } from '../webhook/mercadoPagoHandler.js';
 
 const app = express();
 
