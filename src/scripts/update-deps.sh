@@ -4,7 +4,7 @@ echo ""
 echo "Punishment Webhook – Atualizando dependências do projeto..."
 echo ""
 
-# Instalar/atualizar as dependências principais
+# Instala ou atualiza as dependências principais
 npm install \
   axios@^1.7.9 \
   dotenv@^16.4.7 \
@@ -12,7 +12,7 @@ npm install \
   mercadopago@^1.5.14 \
   winston@^3.10.0
 
-# Dependências de desenvolvimento
+# Instala dependências de desenvolvimento
 npm install -D nodemon@^3.1.0
 
 echo ""
