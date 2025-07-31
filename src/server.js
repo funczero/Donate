@@ -8,7 +8,7 @@ const app = express();
 app.use(express.json());
 app.post('/webhook', handleMercadoPagoWebhook);
 
-// Iniciar servidor
+// Inicialização do servidor
 app.listen(PORT, () => {
   logger.info(`Servidor rodando na porta ${PORT}`);
 });
