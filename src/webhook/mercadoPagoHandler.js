@@ -1,50 +1,52 @@
-'use strict';
-
-const mercadopago = require('mercadopago');
-const logger = require('../config/logger.js');
-const { notifyDiscord } = require('../services/discordNotifier.js');
+import mercadopago from 'mercadopago';
+import logger from '../config/logger.js';
+import { notifyDiscord } from '../services/discordNotifier.js';
 
 mercadopago.configure({
   access_token: process.env.MERCADO_PAGO_ACCESS_TOKEN,
 });
 
-module.exports.handleMercadoPagoWebhook = async (req, res) => {
+/**
+ * Webhook do Mercado Pago para processar notificações de pagamento.
+ * @param {import('express').Request} req 
+ * @param {import('express').Response} res 
+ */
+
+export async function handleMercadoPagoWebhook(req, res) {
   const event = req.body;
 
-  if (!event || !event.type) {
-    logger.warn('Webhook do Mercado Pago malformado.');
+  if (!event?.type || !event?.data?.id) {
+    logger.warn('[MP Webhook] Evento inválido ou malformado recebido.');
     return res.status(400).send('Evento inválido');
   }
 
-  const paymentId = event.data?.id;
-
-  if (!paymentId) {
-    logger.warn('Evento do Mercado Pago sem ID de pagamento.');
-    return res.sendStatus(400);
-  }
+  const paymentId = event.data.id;
 
   try {
-    const payment = await mercadopago.payment.findById(paymentId);
+    const response = await mercadopago.payment.findById(paymentId);
+    const payment = response.body;
 
-    const status = payment.body.status;
-    const metadata = payment.body.metadata || {};
+    const { status, transaction_amount, metadata = {} } = payment;
     const userId = metadata.discord_user || '0';
-    const amount = Number(payment.body.transaction_amount).toFixed(2);
+    const amount = Number(transaction_amount).toFixed(2);
 
     if (status === 'approved') {
-      logger.info(`Pagamento aprovado via MP: R$${amount} de <@${userId}>`);
+      logger.info(`[MP Webhook] Pagamento aprovado: R$${amount} de <@${userId}>`);
+
       try {
         await notifyDiscord(userId, amount);
-      } catch (err) {
-        logger.warn(`Erro ao notificar Discord: ${err.message}`);
+      } catch (notifyError) {
+        logger.warn(`[MP Webhook] Pagamento recebido, mas falha ao notificar Discord: ${notifyError.message}`);
       }
+
     } else {
-      logger.info(`Pagamento com status: ${status} (ignorado)`);
+      logger.info(`[MP Webhook] Pagamento com status '${status}' ignorado (ID: ${paymentId})`);
     }
 
     return res.sendStatus(200);
+
   } catch (error) {
-    logger.error(`Erro ao buscar pagamento do Mercado Pago: ${error.message}`);
-    return res.status(500).send('Erro ao processar pagamento');
+    logger.error(`[MP Webhook] Falha ao consultar pagamento ${paymentId}: ${error.message}`);
+    return res.status(500).send('Não foi possível processar o pagamento');
   }
-};
+}
