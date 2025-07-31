@@ -23,13 +23,20 @@ export async function handleMercadoPagoWebhook(req, res) {
   const paymentId = event.data.id;
 
   try {
+    
     const response = await mercadopago.payment.findById(paymentId);
     const payment = response.body;
 
-    const { status, transaction_amount, metadata = {} } = payment;
+    const {
+      status,
+      transaction_amount,
+      metadata = {},
+    } = payment;
+
     const userId = metadata.discord_user || '0';
     const amount = Number(transaction_amount).toFixed(2);
 
+    // Processa apenas pagamentos aprovados
     if (status === 'approved') {
       logger.info(`[MP Webhook] Pagamento aprovado: R$${amount} de <@${userId}>`);
 
