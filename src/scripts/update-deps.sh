@@ -9,7 +9,7 @@ npm install \
   axios@^1.7.9 \
   dotenv@^16.4.7 \
   express@^4.21.2 \
-  stripe@^17.6.0 \
+  mercadopago@^1.5.14 \
   winston@^3.10.0
 
 # Dependências de desenvolvimento
