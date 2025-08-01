@@ -1,6 +1,6 @@
 import axios from 'axios';
-import logger from '../config/logger';
-import { DISCORD_WEBHOOK_URL } from '../config/env';
+import logger from '../config/logger.js';
+import { DISCORD_WEBHOOK_URL } from '../config/env.js';
 
 export async function notifyDiscord(userId, amount) {
   try {
