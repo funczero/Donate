@@ -1,6 +1,4 @@
-'use strict';
-
-const { Schema, model } = require('mongoose');
+import { Schema, model } from 'mongoose';
 
 const pendingDonorSchema = new Schema({
   userId: {
@@ -14,4 +12,4 @@ const pendingDonorSchema = new Schema({
   }
 });
 
-module.exports = model('PendingDonor', pendingDonorSchema);
+export default model('PendingDonor', pendingDonorSchema);
