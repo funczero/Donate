@@ -1,6 +1,6 @@
 import mercadopago from 'mercadopago';
-import logger from '../config/logger';
-import { notifyDiscord } from '../services/discordNotifier';
+import logger from '../config/logger.js';
+import { notifyDiscord } from '../services/discordNotifier.js';
 
 mercadopago.configure({
   access_token: process.env.MERCADO_PAGO_ACCESS_TOKEN,
