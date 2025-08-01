@@ -1,18 +1,13 @@
 import mercadopago from 'mercadopago';
 import logger from '../config/logger.js';
 import { notifyDiscord } from '../services/discordNotifier.js';
+import PendingDonor from '../models/PendingDonor.js';
 
 mercadopago.configure({
   access_token: process.env.MERCADO_PAGO_ACCESS_TOKEN,
 });
 
 const processedPayments = new Set();
-
-/**
- * Webhook do Mercado Pago para processar notificações de pagamento.
- * @param {import('express').Request} req 
- * @param {import('express').Response} res 
- */
 
 export async function handleMercadoPagoWebhook(req, res) {
   const event = req.body;
@@ -23,7 +18,7 @@ export async function handleMercadoPagoWebhook(req, res) {
   }
 
   const paymentId = event.data.id;
-  
+
   if (processedPayments.has(paymentId)) {
     logger.info(`[MP Webhook] Pagamento ${paymentId} já foi processado. Ignorando duplicata.`);
     return res.status(200).send('Duplicado');
@@ -33,11 +28,7 @@ export async function handleMercadoPagoWebhook(req, res) {
     const response = await mercadopago.payment.findById(paymentId);
     const payment = response.body;
 
-    const {
-      status,
-      transaction_amount,
-      metadata = {},
-    } = payment;
+    const { status, transaction_amount, metadata = {} } = payment;
 
     const userId = metadata.discord_user || '0';
     const amount = Number(transaction_amount).toFixed(2);
@@ -52,6 +43,18 @@ export async function handleMercadoPagoWebhook(req, res) {
       } catch (notifyError) {
         logger.warn(`[MP Webhook] Pagamento recebido, mas falha ao notificar Discord: ${notifyError.message}`);
       }
+
+      try {
+        await PendingDonor.updateOne(
+          { userId },
+          { $set: { userId, createdAt: new Date() } },
+          { upsert: true }
+        );
+        logger.info(`[MP Webhook] Doador pendente salvo no banco: ${userId}`);
+      } catch (dbError) {
+        logger.error(`[MongoDB] Falha ao salvar doador pendente: ${dbError.message}`);
+      }
+
     } else {
       logger.info(`[MP Webhook] Pagamento com status '${status}' ignorado (ID: ${paymentId})`);
     }
