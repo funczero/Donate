@@ -20,7 +20,9 @@ export async function handleMercadoPagoWebhook(req, res) {
   const paymentId = event.data.id;
 
   if (processedPayments.has(paymentId)) {
-    logger.info(`[MP Webhook] Pagamento ${paymentId} já foi processado. Ignorando duplicata.`);
+    logger.info(
+      `[MP Webhook] Pagamento ${paymentId} já foi processado. Ignorando duplicata.`
+    );
     return res.status(200).send('Duplicado');
   }
 
@@ -31,38 +33,59 @@ export async function handleMercadoPagoWebhook(req, res) {
     const { status, transaction_amount, metadata = {} } = payment;
 
     const userId = metadata.discord_user || '0';
+    const displayName = metadata.discord_display_name || userId;
     const amount = Number(transaction_amount).toFixed(2);
 
     if (status === 'approved') {
-      logger.info(`[MP Webhook] Pagamento aprovado: R$${amount} de <@${userId}>`);
+      logger.info(
+        `[MP Webhook] Pagamento aprovado: R$${amount} de ${displayName}`
+      );
 
       processedPayments.add(paymentId);
 
       try {
         await notifyDiscord(userId, amount);
       } catch (notifyError) {
-        logger.warn(`[MP Webhook] Pagamento recebido, mas falha ao notificar Discord: ${notifyError.message}`);
+        logger.warn(
+          `[MP Webhook] Pagamento recebido, mas falha ao notificar Discord: ${notifyError.message}`
+        );
       }
 
       try {
         await PendingDonor.updateOne(
           { userId },
-          { $set: { userId, createdAt: new Date() } },
+          {
+            $set: {
+              userId,
+              displayName,
+              createdAt: new Date(),
+            },
+          },
           { upsert: true }
         );
-        logger.info(`[MP Webhook] Doador pendente salvo no banco: ${userId}`);
-      } catch (dbError) {
-        logger.error(`[MongoDB] Falha ao salvar doador pendente: ${dbError.message}`);
-      }
 
+        logger.info(
+          `[MP Webhook] Doador pendente salvo no banco: ${displayName} (${userId})`
+        );
+      } catch (dbError) {
+        logger.error(
+          `[MongoDB] Falha ao salvar doador pendente: ${dbError.message}`
+        );
+      }
     } else {
-      logger.info(`[MP Webhook] Pagamento com status '${status}' ignorado (ID: ${paymentId})`);
+      logger.info(
+        `[MP Webhook] Pagamento com status '${status}' ignorado (ID: ${paymentId})`
+      );
     }
 
     return res.sendStatus(200);
-
   } catch (error) {
-    logger.error(`[MP Webhook] Falha ao consultar pagamento ${paymentId}: ${error.message}`);
-    return res.status(500).send('Não foi possível processar o pagamento');
+    logger.error(
+      `[MP Webhook] Falha ao consultar pagamento ${paymentId}: ${error.message}`
+    );
+
+    return res
+      .status(500)
+      .send('Não foi possível processar o pagamento');
   }
 }
